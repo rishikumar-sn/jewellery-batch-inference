@@ -1,0 +1,32 @@
+# Local environments and dependency caches
+.venv/
+venv/
+node_modules/
+.npm/
+/offline/npm-cache/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Model weights and generated inspection data
+/models/
+*.gguf
+*.safetensors
+/data/
+/test-output/
+*.sqlite3*
+*.log
+
+# Local settings and secrets
+/.vscode/
+.env
+.env.*
+!.env.example
+
+# The offline app uses the bundled server and its DLLs.
+/tools/llama.cpp/*.exe
+!/tools/llama.cpp/llama-server.exe
+/tools/llama.cpp/llama-*-impl.dll
+!/tools/llama.cpp/llama-server-impl.dll

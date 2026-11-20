@@ -1,0 +1,9 @@
+{
+    "model": "models/testing/Qwen3.5-2B-Q4_K_M.gguf",
+    "projector": "models/testing/Qwen3.5-2B-mmproj-f16.gguf",
+    "threads": 8,
+    "image_side": 512,
+    "max_tokens": 192,
+    "server": "tools/llama.cpp/llama-server.exe",
+    "inference_mode": "inspection"
+}

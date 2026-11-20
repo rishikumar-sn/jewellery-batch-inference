@@ -1,0 +1,16 @@
+{
+  "model": {
+    "path": "D:\\PROJECTS_BY_RISHI\\Models\\Qwen3.5-2B\\Qwen3.5-2B-Q4_K_M.gguf",
+    "sha256": "cd1950c433492e0bbf2e64f32486c525af0e0bf2ab98dd73c329e597ef282f2d",
+    "repo": "vultr/Qwen3.5-2B-GGUF",
+    "revision": "eefa5164a6ef76f9a5577945555392c79a77686c"
+  },
+  "projector": {
+    "path": "D:\\PROJECTS_BY_RISHI\\Models\\Qwen3.5-2B\\Qwen3.5-2B-mmproj-f16.gguf",
+    "sha256": "9c53dca2f4d13a91d4a91dd03f4168a8bc643c680776405083c2027aac5b1249"
+  },
+  "server": {
+    "path": "D:\\PROJECTS_BY_RISHI\\projects\\AU-PROJECT\\AU-Image-Analysis\\tools\\llama.cpp\\llama-server.exe",
+    "sha256": "d59a9c5eea74381b43317cd3fda2d0bc85632ff641091c73c1ab82527a94e089"
+  }
+}
