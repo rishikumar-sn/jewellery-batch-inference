@@ -3,7 +3,7 @@
     "projector": "models/testing/Qwen3.5-2B-mmproj-f16.gguf",
     "threads": 8,
     "image_side": 512,
-    "max_tokens": 192,
+    "max_tokens": 240,
     "server": "tools/llama.cpp/llama-server.exe",
     "inference_mode": "inspection"
 }

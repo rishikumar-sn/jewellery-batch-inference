@@ -17,9 +17,12 @@ def answer(data, finish='stop'):
     if 'p' in data:
         data = {**{name: data[key] for key, name in WIRE_NAMES.items()},
                 **{k: v for k, v in data.items() if k not in (*WIRE_NAMES, 'v')},
-                'note': data.get('note', 'One visible ornament on the inspection pan'),
+                'note': data.get('note', 'One visible bangle on the inspection pan'),
                 'subject': data.get('subject', 'tray_pan')}
     return {'choices': [{'message': {'content': json.dumps(data)}, 'finish_reason': finish}]}
+
+def scale_answer(reading, finish='stop'):
+    return {'choices': [{'message': {'content': reading}, 'finish_reason': finish}]}
 
 
 class InspectionTests(unittest.TestCase):
@@ -36,7 +39,7 @@ class InspectionTests(unittest.TestCase):
         return result, reporter.request
 
     def test_good_image_needs_one_pass_and_no_weight(self):
-        result, request = self.run_model(answer({**GOOD, 'scale': 'present'}))
+        result, request = self.run_model(answer({**GOOD, 'scale': 'absent'}))
         self.assertEqual(request.call_count, 1)
         self.assertEqual(result['processing_status'], 'completed')
         self.assertEqual(classify(result['report'])['tier'], 'low')
@@ -44,7 +47,7 @@ class InspectionTests(unittest.TestCase):
         self.assertIn('response_format', request.call_args.args[1])
 
     def test_detail_findings_are_available_in_one_pass(self):
-        result, request = self.run_model(answer({**GOOD, 'details': ['threads', 'black_beads']}))
+        result, request = self.run_model(answer({**GOOD, 'details': ['threads', 'black_beads'], 'note': 'Bangle with a thread and black beads'}))
         self.assertEqual(request.call_count, 1)
         details = result['report']['visual_details']
         self.assertEqual(details['coloured_stones_or_beads'], 'unknown')
@@ -52,12 +55,65 @@ class InspectionTests(unittest.TestCase):
         self.assertEqual(risk['tier'], 'low')
         self.assertTrue({'threads', 'black_beads', 'possible_mangalsutra'} <= set(risk['categories']))
 
-    def test_one_visible_item_cannot_overlap_separate_items(self):
-        result, request = self.run_model(answer({**GOOD, 's': 'limits_inspection', 'note': 'Gold bangle on precision scale'}))
-        self.assertEqual(request.call_count, 1)
+    def test_overlap_with_single_item_prediction_withholds_count(self):
+        result, request = self.run_model(answer({**GOOD, 's': 'limits_inspection', 'note': 'Gold bangle on precision scale'}),
+                                         scale_answer('not_visible'), scale_answer('not_visible'))
+        self.assertEqual(request.call_count, 3)
+        self.assertNotIn('jewel_count', result['report'])
         risk = classify(result['report'])
-        self.assertEqual(risk['tier'], 'low')
+        self.assertEqual(risk['tier'], 'medium')
         self.assertIn('scale_present', risk['categories'])
+
+    def test_scale_reading_requires_matching_digits_and_exports_grams(self):
+        for first, second, expected in [('44.52', '44.52', '44.52 g'),
+                                        ('11.720g', '11.720 g', '11.720 g'),
+                                        ('0.012 kg', '0.012kg', '12.000 g'),
+                                        ('44.52', '44.53', None)]:
+            with self.subTest(first=first, second=second):
+                result, request = self.run_model(answer({**GOOD, 'scale': 'present', 'display_area': 'bottom'}),
+                                                 scale_answer(first), scale_answer(second))
+                scale = result['report']['scale']
+                risk = classify(result['report'])
+                self.assertEqual(scale.get('weight_text'), expected)
+                self.assertEqual(risk['tier'], 'low')
+                self.assertIn('weight_present' if expected else 'weight_unreadable', risk['categories'])
+                self.assertEqual(request.call_count, 3)
+
+    def test_unresolved_printed_background_is_excluded_from_findings(self):
+        prediction = answer({**GOOD, 'note': 'Bangle and gold handcuffs', 'details': ['black_beads']})
+        result, request = self.run_model(prediction, prediction)
+        self.assertEqual(request.call_count, 2)
+        report = result['report']
+        self.assertNotIn('handcuffs', report['description'])
+        self.assertNotIn('possible_jewel_types', report)
+        self.assertNotIn('visual_details', report)
+        self.assertIn('contradictions', classify(report, notes=result['observation_notes'])['categories'])
+
+    def test_findings_without_matching_visual_evidence_are_withheld(self):
+        result, _ = self.run_model(answer({**GOOD, 'note': 'Coiled gold chain on weighing scale',
+                                          't': ['toe_ring'], 'details': ['threads', 'coloured_stones_or_beads']}),
+                                   scale_answer('44.52'), scale_answer('44.52'))
+        report = result['report']
+        self.assertFalse(report['possible_jewel_types'])
+        self.assertEqual(set(report['visual_details'].values()), {'unknown'})
+        self.assertNotIn('toe ring', report['description'])
+        self.assertNotIn('stones', report['description'])
+
+    def test_description_and_types_share_the_same_grounded_findings(self):
+        result, _ = self.run_model(answer({**GOOD, 'c': 2,
+            'note': 'Gold choker with beaded trim and a pair of earrings, no coloured stones'}))
+        report = result['report']
+        self.assertEqual([item['name'] for item in report['possible_jewel_types']], ['choker', 'earrings'])
+        self.assertNotIn('jewel_count', report)
+        for term in ('choker', 'earrings', 'beaded decoration'):
+            self.assertIn(term, report['description'])
+        self.assertNotIn('stones', report['description'])
+        self.assertEqual(classify(report, notes=result['observation_notes'])['tier'], 'low')
+
+    def test_unconfirmed_location_is_omitted_from_description(self):
+        result, _ = self.run_model(answer({**GOOD, 'note': 'A gold bangle is visible.'}))
+        self.assertEqual(result['report']['inspection_subject'], 'unknown')
+        self.assertNotIn('tray', result['report']['description'])
 
     def test_glass_holders_are_checked_even_on_scale_pan(self):
         result, request = self.run_model(

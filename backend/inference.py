@@ -18,7 +18,7 @@ from PIL import Image, ImageOps
 from .observations import GRAMMAR, PROMPT, PRESENCE_PROMPT, SCHEMA, VERSION, expand
 from .process_job import ProcessJob
 from .consistency import review, AUDIT_PROMPT, VERSION as CONSISTENCY_VERSION
-from . import balanced, inspection
+from . import balanced, inspection, scale_reading
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MODELS = Path('D:/PROJECTS_BY_RISHI/Downloads/qwen')
@@ -39,7 +39,7 @@ class Settings:
     projector: str = str(DEFAULT_MODELS / 'mmproj-Qwen3VL-2B-Instruct-Q8_0.gguf')
     threads: int = min(8, os.cpu_count() or 4)
     image_side: int = 512
-    max_tokens: int = 160
+    max_tokens: int = 192
     server: str = ''
     inference_mode: str = 'inspection'
 
@@ -51,7 +51,8 @@ class Settings:
             data[key] = [str(p), stat.st_size, stat.st_mtime_ns]
         return hashlib.sha256(json.dumps([data, PROMPT, PRESENCE_PROMPT, AUDIT_PROMPT,
             SCHEMA, GRAMMAR, VERSION, CONSISTENCY_VERSION, balanced.PROMPT, balanced.COMPACT_AUDIT_PROMPT,
-            balanced.GRAMMAR, balanced.VERSION, inspection.PROMPT, inspection.SCHEMA, inspection.VERSION], sort_keys=True).encode()).hexdigest()
+            balanced.GRAMMAR, balanced.VERSION, inspection.PROMPT, inspection.SCHEMA, inspection.VERSION,
+            scale_reading.PROMPT], sort_keys=True).encode()).hexdigest()
 
 
 class CpuReporter:
