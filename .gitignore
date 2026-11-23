@@ -16,6 +16,7 @@ __pycache__/
 *.safetensors
 /data/
 /test-output/
+/vlm-calibration/
 *.sqlite3*
 *.log
 

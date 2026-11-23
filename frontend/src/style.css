@@ -30,9 +30,88 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #75a6
 .detail-copy .result-rows dt { color: #536c85; }
 .detail-copy .result-rows dd strong { font-size: 1.13rem; font-variant-numeric: tabular-nums; }
 .image-assessment { margin-top: 20px; }
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+.app > header {
+  display: grid;
+  flex: none;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-areas: "bank title end";
+  gap: clamp(12px, 2vw, 24px);
+}
+.app > header > .brand {
+  grid-area: bank;
+  justify-self: start;
+}
+.header-title {
+  grid-area: title;
+  margin: 0;
+  font-size: clamp(18px, 2.8vw, 30px);
+  text-align: center;
+}
+.header-end {
+  grid-area: end;
+  display: flex;
+  flex-flow: row-reverse wrap;
+  align-items: center;
+  gap: 8px clamp(12px, 2vw, 24px);
+}
+.header-actions { white-space: nowrap; }
+.embsys-logo {
+  display: block;
+  width: 144px;
+  height: auto;
+}
+.app > main {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+  margin: 0 auto;
+}
+.app > main > :not(.workspace) { flex-shrink: 0; }
+.workspace {
+  flex: 1;
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 320px;
+}
+.workspace > aside { min-height: 0; }
+.aside-title, .aside-bottom { flex-shrink: 0; }
+.batch-list, .workspace > .content {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.batch-list { max-height: none; }
+.batch-list:focus-visible, .workspace > .content:focus-visible {
+  outline: 3px solid #75a6e5;
+  outline-offset: -3px;
+}
+.content > .empty { min-height: 100%; }
+
+@media (min-width: 701px) {
+  .company-logo { width: 144px; }
+}
 @media (max-width: 700px) {
+  .page-title { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .workspace > aside { flex: none; }
+  .workspace > .content { flex: 1; }
   .detail-image img { max-height: 30vh; }
   .detail-copy { padding: 24px 20px; }
   .detail-copy h2 { margin-bottom: 18px; }
   .image-results { margin-top: 18px; }
+}
+@media (max-width: 760px) {
+  .app > header {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "bank end" "title title";
+    gap: 8px 12px;
+  }
+  .app > header > .brand { align-self: start; }
+  .embsys-logo { width: 108px; }
 }

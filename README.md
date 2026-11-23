@@ -42,14 +42,14 @@ The model file initially had SHA-256 `2fd003e42c015a9579951c03c061373669733b8c2b
 
 ## Jewellery visibility inspection (policy 4)
 
-The default `inspection` mode starts with one structured visual assessment. The maintained prompt is `backend/prompts/inspection.txt`; it defines subject selection, observable limitation levels, explicit uncertainty, and boundary examples. It inspects the main subject on the pan/tray or inside the held packet, ignoring background jewellery and worn accessories. The model returns a short visual grounding note, presence, cropping, obstruction, blur, glare/exposure and item separation. Overall inspectability is derived locally from those answers; application rules assign priority.
+The default `inspection` mode starts with one structured visual assessment. The maintained prompt is `backend/prompts/inspection.txt`. It inspects the main subject on the pan/tray or inside the held packet and ignores background jewellery and worn accessories. The model describes the visible evidence and reports capture source, jewellery presence, visible construction, cropping, obstruction, blur, glare/exposure and item separation. Application rules assign priority.
 
 | Priority | Criterion |
 |---|---|
-| Critical | Decode failure or effectively blank frame (at least 99.5% near-black/near-white pixels). |
-| High | Jewellery absent, presence cannot be established, or substantial visibility limitation prevents assessment of basic form. |
-| Medium | Meaningful local section obscured/cropped/blurred/affected by glare, or separate items hide each other. |
-| Low | Jewellery present and adequately visible with all essential visibility answers complete. |
+| Critical | Decode failure, effectively blank frame (at least 99.5% near-black/near-white pixels), a visibly reproduced photo, or essentially no usable view of the subject. |
+| High | Jewellery absent, presence cannot be established, or most construction cannot be inspected. |
+| Medium | Useful construction is visible but important detail is lost to overlap, cropping, obstruction, blur, glare or exposure. |
+| Low | Jewellery presence and visibility are established, including cases where construction is clear and only the count remains uncertain. |
 | Unassessed | Missing/invalid/failed assessment or unresolved essential visibility uncertainty without an established substantive limitation. |
 
 Minor findings do not accumulate. Only decode failures and effectively blank frames bypass the model. Low sharpness or extensive near-white pixels in the central inspection area can trigger a second look when the model reports unrestricted visibility. An unresolved discrepancy stays in Needs verification. A scale image without readable weight is eligible for Low.

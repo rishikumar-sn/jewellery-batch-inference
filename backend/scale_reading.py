@@ -7,6 +7,7 @@ from decimal import Decimal
 
 from PIL import Image
 
+VERSION = 4
 READING = re.compile(r'\s*([+-]?\d+(?:[.,]\d+)?)\s*(kg|mg|g|oz|ct)?\s*', re.I)
 PROMPT = (
     'Read only the number on the electronic weighing scale screen. Transcribe each digit and '
@@ -16,6 +17,40 @@ PROMPT = (
 )
 DISPLAY_BANDS = {'top': (0, .6), 'middle': (.2, .8), 'bottom': (.5, 1)}
 GRAMS_PER_UNIT = {'kg': Decimal('1000'), 'mg': Decimal('.001'), 'oz': Decimal('28.349523125'), 'ct': Decimal('.2')}
+CHECK_PROMPT = (
+    'Is a real digital weighing scale or its weighing cabin visible? Look for a scale body, '
+    'weighing platform with a scale display, or a balance chamber. A tray, packet, mat, phone, '
+    'or printed image alone is not a scale. Classify only. Return absent if there is no scale, '
+    'unknown if unsure, not_visible if a scale is visible but its screen is definitely out of view, '
+    'top, middle, or bottom for a visible scale screen, or present if the scale is visible '
+    'but its screen location is uncertain. Do not read any digits.'
+)
+CHECK_GRAMMAR = 'root ::= "absent" | "unknown" | "not_visible" | "top" | "middle" | "bottom" | "present"'
+
+
+def confirm_scale(reporter, uri, input_size, attempts):
+    """Resolve an unsupported scale prediction before attempting to read digits."""
+    started = time.perf_counter()
+    attempt = dict(stage='scale_detection', input_size=input_size)
+    try:
+        response = reporter.request('/v1/chat/completions', {
+            'messages': [{'role': 'user', 'content': [
+                {'type': 'image_url', 'image_url': {'url': uri}},
+                {'type': 'text', 'text': CHECK_PROMPT}]}],
+            'temperature': 0, 'max_tokens': 12, 'cache_prompt': True, 'grammar': CHECK_GRAMMAR,
+            'chat_template_kwargs': {'enable_thinking': False}})
+        choice = response['choices'][0]
+        raw = (choice['message'].get('content') or '').strip()
+        attempt.update(raw=raw, finish_reason=choice.get('finish_reason'),
+                       usage=response.get('usage'), timings=response.get('timings'))
+        if choice.get('finish_reason') == 'stop' and raw in (*DISPLAY_BANDS, 'present', 'not_visible', 'absent'):
+            return raw
+    except Exception as exc:
+        attempt['error'] = str(exc)
+    finally:
+        attempt['seconds'] = round(time.perf_counter() - started, 3)
+        attempts.append(attempt)
+    return 'unknown'
 
 
 def read_scale(reporter, original, area, attempts):

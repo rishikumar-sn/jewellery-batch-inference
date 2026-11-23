@@ -17,6 +17,7 @@ import urllib.request
 from PIL import Image, ImageOps
 from .observations import GRAMMAR, PROMPT, PRESENCE_PROMPT, SCHEMA, VERSION, expand
 from .process_job import ProcessJob
+from .inspection_policy import VERSION as INSPECTION_POLICY_VERSION
 from .consistency import review, AUDIT_PROMPT, VERSION as CONSISTENCY_VERSION
 from . import balanced, inspection, scale_reading
 
@@ -52,7 +53,7 @@ class Settings:
         return hashlib.sha256(json.dumps([data, PROMPT, PRESENCE_PROMPT, AUDIT_PROMPT,
             SCHEMA, GRAMMAR, VERSION, CONSISTENCY_VERSION, balanced.PROMPT, balanced.COMPACT_AUDIT_PROMPT,
             balanced.GRAMMAR, balanced.VERSION, inspection.PROMPT, inspection.SCHEMA, inspection.VERSION,
-            scale_reading.PROMPT], sort_keys=True).encode()).hexdigest()
+            scale_reading.PROMPT, scale_reading.VERSION, INSPECTION_POLICY_VERSION], sort_keys=True).encode()).hexdigest()
 
 
 class CpuReporter:
